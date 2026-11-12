@@ -16,6 +16,8 @@ import DiscoveryIcon from "../icons/discovery.svg";
 import Locale from "../locales";
 
 import { useAppConfig, useChatStore } from "../store";
+import { createMessage } from "../store/chat";
+import { createEmptyMask } from "../store/mask";
 
 import {
   DEFAULT_SIDEBAR_WIDTH,
@@ -34,6 +36,7 @@ import clsx from "clsx";
 import { isMcpEnabled } from "../mcp/actions";
 
 const DISCOVERY = [
+  { name: "Blog Writer", path: "skill:blog-writer" },
   { name: Locale.Plugin.Name, path: Path.Plugins },
   { name: "Stable Diffusion", path: Path.Sd },
   { name: Locale.SearchChat.Page.Title, path: Path.SearchChat },
@@ -282,7 +285,7 @@ export function SideBar(props: { className?: string }) {
           )}
           <IconButton
             icon={<DiscoveryIcon />}
-            text={shouldNarrow ? undefined : Locale.Discovery.Name}
+            text={shouldNarrow ? undefined : "Tools"}
             className={styles["sidebar-bar-button"]}
             onClick={() => setshowDiscoverySelector(true)}
             shadow
@@ -299,8 +302,24 @@ export function SideBar(props: { className?: string }) {
               }),
             ]}
             onClose={() => setshowDiscoverySelector(false)}
-            onSelection={(s) => {
-              navigate(s[0], { state: { fromHome: true } });
+            onSelection={(selection) => {
+              const selected = selection[0];
+              if (selected === "skill:blog-writer") {
+                const blogWriter = createEmptyMask();
+                blogWriter.name = "Blog Writer";
+                blogWriter.avatar = "✍️";
+                blogWriter.context = [
+                  createMessage({
+                    role: "system",
+                    content:
+                      "You are BrosAI Blog Writer. Write clear, useful blog posts in simple English. Use short sentences, helpful headings, practical examples, and a friendly tone. Start by asking for the topic, audience, and desired length when they are missing. Do not use complex jargon unless you explain it.",
+                  }),
+                ];
+                chatStore.newSession(blogWriter);
+                navigate(Path.Chat, { state: { fromHome: true } });
+                return;
+              }
+              navigate(selected, { state: { fromHome: true } });
             }}
           />
         )}
